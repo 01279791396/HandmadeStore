@@ -112,6 +112,22 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var dbContext = services.GetRequiredService<AppDbContext>(); // غيّر الاسم لاسم الـ DbContext بتاعك
+        dbContext.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "حدث خطأ أثناء تطبيق الـ Migrations على قاعدة البيانات.");
+        throw; // اتركه يرمي الخطأ أثناء الاختبار الأولي لتعرف لو فيه مشكلة في الـ Connection String
+    }
+}
+
 // لو تهيئة الداتابيز فشلت، نكتب الخطأ في ملف ونعرضه في الصفحة (مؤقتًا للتشخيص)
 // بدل ما التطبيق يقع بـ 500.30 من غير أي تفاصيل.
 string? startupError = null;
