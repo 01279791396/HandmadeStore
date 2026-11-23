@@ -1,0 +1,30 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<StoreSettings> StoreOptions
+@{
+    var store = StoreOptions.Value;
+    ViewData["Title"] = "عن المتجر";
+}
+
+<div class="container" style="max-width: 800px;">
+    <h1 class="section-title">عن @store.Name</h1>
+    <p class="lead">@store.Tagline</p>
+    <p>
+        كل قطعة عندنا بتتعمل بالإيد بعناية وحب، من خامات مختارة. عشان كده كل منتج فيه لمسة مميزة،
+        وممكن تلاقي اختلافات بسيطة بين قطعة وأخرى، وده جزء من جمال الشغل اليدوي.
+    </p>
+    <h2 class="h5 fw-bold mt-4">إزاي بنشتغل؟</h2>
+    <ul>
+        <li>بعد ما تبعت الطلب هنتواصل معاك على الموبايل لتأكيده.</li>
+        <li>مدة التجهيز بتختلف حسب المنتج وبتظهر في صفحته.</li>
+        <li>الدفع عند الاستلام.</li>
+        <li>تقدر تتابع طلبك من صفحة "تتبع طلبي" بكود الطلب ورقم موبايلك.</li>
+    </ul>
+    <h2 class="h5 fw-bold mt-4">عايز تطلب تصميم خاص؟</h2>
+    <p>
+        كلمنا وقولنا فكرتك، وهنشوف مع بعض إزاي نحولها لقطعة مميزة.
+        @if (!string.IsNullOrWhiteSpace(store.WhatsApp))
+        {
+            <a href="https://wa.me/@store.WhatsApp" target="_blank" rel="noopener">كلمنا على واتساب</a>
+        }
+    </p>
+</div>

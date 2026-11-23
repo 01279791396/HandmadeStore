@@ -1,0 +1,13 @@
+# Visual Studio / .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# أسرار وبيانات خاصة بالسيرفر (ما تترفعش على GitHub)
+appsettings.Production.json
+App_Data/
+startup-error.txt
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep

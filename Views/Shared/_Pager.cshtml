@@ -1,0 +1,26 @@
+@model PagerViewModel
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="الصفحات" class="mt-4">
+        <ul class="pagination justify-content-center flex-wrap">
+            @if (Model.Page > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-action="@Model.Action" asp-all-route-data="@Model.WithPage(Model.Page - 1)">السابق</a>
+                </li>
+            }
+            @for (var i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="@Model.Action" asp-all-route-data="@Model.WithPage(i)">@i</a>
+                </li>
+            }
+            @if (Model.Page < Model.TotalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-action="@Model.Action" asp-all-route-data="@Model.WithPage(Model.Page + 1)">التالي</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

@@ -1,0 +1,51 @@
+@model AdminCustomerListViewModel
+@{
+    ViewData["Title"] = "العملاء";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 fw-bold mb-0">العملاء <span class="text-muted fs-6">(@Model.Total)</span></h1>
+</div>
+
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+    <div class="col-8 col-md-4">
+        <input type="search" name="q" value="@Model.Q" class="form-control" placeholder="بحث بالاسم أو الموبايل أو الإيميل..." />
+    </div>
+    <div class="col-4 col-md-2">
+        <button type="submit" class="btn btn-outline-brand w-100">بحث</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>الموبايل</th>
+                    <th class="d-none d-md-table-cell">الإيميل</th>
+                    <th>الطلبات</th>
+                    <th class="d-none d-md-table-cell">تاريخ التسجيل</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td class="fw-bold">@row.Customer.Name</td>
+                        <td dir="ltr" class="text-end">@row.Customer.Phone</td>
+                        <td dir="ltr" class="text-end d-none d-md-table-cell">@row.Customer.Email</td>
+                        <td>@row.OrderCount</td>
+                        <td class="d-none d-md-table-cell">@Fmt.Date(row.Customer.CreatedAt)</td>
+                    </tr>
+                }
+                @if (Model.Rows.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-4">مفيش عملاء مسجّلين لسه</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<partial name="_Pager" model="Model.Pager" />

@@ -1,0 +1,125 @@
+@model Order
+@using Microsoft.Extensions.Options
+@inject IOptions<StoreSettings> StoreOptions
+@{
+    Layout = null;
+    var store = StoreOptions.Value;
+    var email = Model.Customer?.Email;
+    var isPickup = Model.DeliveryMethod == DeliveryMethod.Pickup;
+    var issued = Model.InvoiceIssuedAt ?? Model.CreatedAt;
+    var n = 0;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>فاتورة @Model.InvoiceNumber</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: 'Cairo', system-ui, sans-serif; background: #f1ebe3; color: #3a2a21; }
+        .sheet { max-width: 820px; margin: 1.5rem auto; background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 6px 24px rgba(58,42,33,.12); }
+        .inv-head { border-bottom: 3px solid #c0573b; padding-bottom: 1rem; margin-bottom: 1.25rem; }
+        .inv-title { color: #c0573b; font-weight: 800; letter-spacing: .05rem; }
+        .box { background: #faf6f0; border-radius: .75rem; padding: .9rem 1rem; height: 100%; }
+        .box h2 { font-size: .95rem; font-weight: 800; color: #c0573b; margin-bottom: .5rem; }
+        table.items thead th { background: #3a2a21; color: #fff; font-weight: 600; }
+        .grand { background: #c0573b; color: #fff; border-radius: .6rem; padding: .6rem 1rem; font-weight: 800; font-size: 1.15rem; }
+        .code { font-family: ui-monospace, Consolas, monospace; font-weight: 800; direction: ltr; display: inline-block; }
+        @@media (max-width: 575.98px) { .sheet { margin: 0; border-radius: 0; padding: 1rem; } }
+        @@media print {
+            body { background: #fff; }
+            .sheet { box-shadow: none; margin: 0; max-width: none; padding: 0; }
+            .no-print { display: none !important; }
+            table.items thead th { background: #3a2a21 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .grand { background: #c0573b !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+<div class="sheet">
+    <div class="no-print d-flex flex-wrap gap-2 justify-content-between mb-3">
+        <button type="button" class="btn btn-dark" onclick="window.print()"><i class="bi bi-printer"></i> طباعة / حفظ PDF</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.close(); history.length > 1 && history.back();">رجوع</button>
+    </div>
+
+    <div class="inv-head d-flex flex-wrap justify-content-between align-items-start gap-3">
+        <div>
+            <div class="h3 fw-bold mb-1">@store.Name</div>
+            @if (!string.IsNullOrWhiteSpace(store.Tagline)) { <div class="text-muted small">@store.Tagline</div> }
+            <div class="small mt-2">
+                @if (!string.IsNullOrWhiteSpace(store.Phone)) { <div><i class="bi bi-telephone"></i> <span dir="ltr">@store.Phone</span></div> }
+                @if (!string.IsNullOrWhiteSpace(store.Address)) { <div><i class="bi bi-geo-alt"></i> @store.Address</div> }
+            </div>
+        </div>
+        <div class="text-end">
+            <div class="h2 inv-title mb-1">فاتورة</div>
+            <div class="small">رقم الفاتورة: <span class="code">@Model.InvoiceNumber</span></div>
+            <div class="small">تاريخ الإصدار: @Fmt.Date(issued)</div>
+            <div class="small">كود الطلب: <span class="code">@Model.Code</span></div>
+            <div class="small">تاريخ الطلب: @Fmt.Date(Model.CreatedAt)</div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6">
+            <div class="box">
+                <h2>بيانات العميل</h2>
+                <div><i class="bi bi-person"></i> @Model.CustomerName</div>
+                <div><i class="bi bi-telephone"></i> <span dir="ltr">@Model.Phone</span></div>
+                @if (!string.IsNullOrWhiteSpace(email)) { <div><i class="bi bi-envelope"></i> <span dir="ltr">@email</span></div> }
+                <div><i class="bi bi-geo-alt"></i> @Model.Address</div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="box">
+                <h2>بيانات الطلب</h2>
+                <div><i class="bi @(isPickup ? "bi-shop" : "bi-truck")"></i> @(isPickup ? "استلام من المتجر" : "توصيل لحد العنوان")</div>
+                <div><i class="bi bi-cash-coin"></i> الدفع: عند الاستلام</div>
+                <div><i class="bi bi-flag"></i> الحالة: @Fmt.StatusText(Model.Status)</div>
+                @if (!string.IsNullOrWhiteSpace(Model.Notes)) { <div><i class="bi bi-chat-text"></i> ملاحظات: @Model.Notes</div> }
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle items">
+            <thead>
+                <tr><th style="width:48px">#</th><th>المنتج</th><th>سعر القطعة</th><th>الكمية</th><th>الإجمالي</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    n++;
+                    <tr>
+                        <td>@n</td>
+                        <td>@item.ProductName</td>
+                        <td>@Fmt.Price(item.UnitPrice)</td>
+                        <td>@item.Quantity</td>
+                        <td>@Fmt.Price(item.LineTotal)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="row justify-content-end">
+        <div class="col-sm-6 col-md-5">
+            <div class="d-flex justify-content-between py-1"><span>إجمالي المنتجات (@Model.Items.Sum(i => i.Quantity) قطعة)</span><span>@Fmt.Price(Model.Subtotal)</span></div>
+            <div class="d-flex justify-content-between py-1">
+                <span>@(isPickup ? "استلام من المتجر" : "مصاريف التوصيل")</span>
+                <span>@(isPickup ? "—" : (Model.DeliveryFee == 0 ? "مجاني" : Fmt.Price(Model.DeliveryFee)))</span>
+            </div>
+            <div class="grand d-flex justify-content-between mt-2"><span>الإجمالي المطلوب</span><span>@Fmt.Price(Model.Total)</span></div>
+        </div>
+    </div>
+
+    <div class="text-center text-muted small mt-5 pt-3 border-top">
+        شكرًا لثقتك في @store.Name 💛 — أي استفسار كلمنا على <span dir="ltr">@store.Phone</span>
+    </div>
+</div>
+</body>
+</html>

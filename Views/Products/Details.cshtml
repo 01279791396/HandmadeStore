@@ -1,0 +1,86 @@
+@model ProductDetailsViewModel
+@{
+    var p = Model.Product;
+    ViewData["Title"] = p.Name;
+    ViewData["Description"] = p.Description.Length > 150 ? p.Description.Substring(0, 150) : p.Description;
+    var returnUrl = Context.Request.Path.Value + Context.Request.QueryString.Value;
+}
+
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">الرئيسية</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Products" asp-action="Index">المنتجات</a></li>
+            @if (p.Category != null)
+            {
+                <li class="breadcrumb-item"><a asp-controller="Products" asp-action="Index" asp-route-categoryId="@p.CategoryId">@p.Category.Name</a></li>
+            }
+            <li class="breadcrumb-item active" aria-current="page">@p.Name</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="detail-img-wrap">
+                <img src="@p.ImageUrl" alt="@p.Name" class="detail-img" />
+            </div>
+        </div>
+        <div class="col-md-6">
+            @if (p.Category != null)
+            {
+                <span class="badge rounded-pill text-bg-light mb-2">@p.Category.Name</span>
+            }
+            <h1 class="h2 fw-bold">@p.Name</h1>
+            <div class="price price-lg my-3">@Fmt.Price(p.Price)</div>
+            <p style="white-space: pre-line;">@p.Description</p>
+
+            <ul class="list-unstyled text-muted mb-4">
+                <li><i class="bi bi-hand-index-thumb"></i> صنع يدوي</li>
+                <li>
+                    <i class="bi bi-clock"></i>
+                    @(p.PrepDays > 0 ? $"مدة التجهيز: {p.PrepDays} أيام تقريبًا" : "جاهز للتسليم")
+                </li>
+                <li><i class="bi bi-cash-coin"></i> الدفع عند الاستلام</li>
+            </ul>
+
+            @if (p.IsAvailable)
+            {
+                <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex flex-wrap gap-2 align-items-center">
+                    <input type="hidden" name="productId" value="@p.Id" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <input type="number" name="quantity" value="1" min="1" max="20" class="form-control qty-input" aria-label="الكمية" />
+                    <button type="submit" class="btn btn-brand btn-lg"><i class="bi bi-bag-plus"></i> أضف للسلة</button>
+                    @if (!string.IsNullOrEmpty(Model.WhatsAppUrl))
+                    {
+                        <a href="@Model.WhatsAppUrl" target="_blank" rel="noopener" class="btn btn-outline-success btn-lg">
+                            <i class="bi bi-whatsapp"></i> اسأل على واتساب
+                        </a>
+                    }
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-secondary">القطعة دي تم بيعها. تقدر تطلب تصميم مشابه، كلمنا!</div>
+                @if (!string.IsNullOrEmpty(Model.WhatsAppUrl))
+                {
+                    <a href="@Model.WhatsAppUrl" target="_blank" rel="noopener" class="btn btn-outline-success">
+                        <i class="bi bi-whatsapp"></i> كلمنا على واتساب
+                    </a>
+                }
+            }
+        </div>
+    </div>
+
+    @if (Model.Related.Count > 0)
+    {
+        <section class="mt-5">
+            <h2 class="section-title">منتجات مشابهة</h2>
+            <div class="row g-3">
+                @foreach (var r in Model.Related)
+                {
+                    <div class="col-6 col-md-3"><partial name="_ProductCard" model="r" /></div>
+                }
+            </div>
+        </section>
+    }
+</div>

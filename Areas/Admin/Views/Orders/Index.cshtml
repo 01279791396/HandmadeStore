@@ -1,0 +1,49 @@
+@model AdminOrderListViewModel
+@{
+    ViewData["Title"] = "الطلبات";
+    var statuses = Enum.GetValues<OrderStatus>();
+}
+
+<h1 class="h3 fw-bold mb-3">الطلبات</h1>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-action="Index" class="btn btn-sm @(Model.Status == null ? "btn-brand" : "btn-outline-brand")">الكل</a>
+    @foreach (var s in statuses)
+    {
+        <a asp-action="Index" asp-route-status="@((int)s)"
+           class="btn btn-sm @(Model.Status == s ? "btn-brand" : "btn-outline-brand")">@Fmt.StatusText(s)</a>
+    }
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr><th>الكود</th><th>العميل</th><th class="d-none d-md-table-cell">الموبايل</th><th>الإجمالي</th><th>الحالة</th><th class="d-none d-md-table-cell">التاريخ</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model.Orders)
+                {
+                    <tr>
+                        <td dir="ltr" class="text-end">@o.Code
+                            @if (o.DeliveryMethod == DeliveryMethod.Pickup) { <i class="bi bi-shop text-muted" title="استلام من المتجر"></i> } else { <i class="bi bi-truck text-muted" title="توصيل"></i> }
+                            @if (o.HasInvoice) { <i class="bi bi-receipt text-success" title="فاتورة @o.InvoiceNumber"></i> }
+                        </td>
+                        <td>@o.CustomerName</td>
+                        <td dir="ltr" class="text-end d-none d-md-table-cell">@o.Phone</td>
+                        <td>@Fmt.Price(o.Total)</td>
+                        <td><span class="badge @Fmt.StatusBadge(o.Status)">@Fmt.StatusText(o.Status)</span></td>
+                        <td class="d-none d-md-table-cell">@Fmt.Date(o.CreatedAt)</td>
+                        <td><a asp-action="Details" asp-route-id="@o.Id" class="btn btn-sm btn-outline-brand">عرض</a></td>
+                    </tr>
+                }
+                @if (Model.Orders.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">مفيش طلبات</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<partial name="_Pager" model="Model.Pager" />

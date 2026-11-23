@@ -1,0 +1,66 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "حساب جديد";
+}
+
+<div class="container">
+    <div class="auth-card">
+        <div class="auth-head">
+            <div class="auth-icon"><i class="bi bi-person-plus"></i></div>
+            <h1 class="h4 fw-bold mb-1">أنشئ حسابك</h1>
+            <p class="text-muted mb-0">لازم تعمل حساب الأول عشان تقدر تتصفح المتجر وتطلب</p>
+        </div>
+
+        <ul class="auth-tabs">
+            <li><a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">تسجيل الدخول</a></li>
+            <li class="active"><a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">حساب جديد</a></li>
+        </ul>
+
+        <form asp-action="Register" method="post" novalidate>
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" autocomplete="name" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Phone" class="form-label"></label>
+                <input asp-for="Phone" class="form-control" dir="ltr" inputmode="tel" autocomplete="tel" placeholder="01xxxxxxxxx" />
+                <span asp-validation-for="Phone" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" dir="ltr" type="email" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <div class="input-group" dir="ltr">
+                    <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                    <button type="button" class="btn btn-outline-secondary" data-toggle-password="#Password" aria-label="إظهار كلمة السر">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <div class="form-text">8 حروف أو أرقام على الأقل.</div>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control" dir="ltr" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-brand btn-lg w-100">إنشاء الحساب</button>
+        </form>
+
+        <p class="text-center text-muted small mt-3 mb-0">
+            عندك حساب؟ <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">سجّل دخولك</a>
+        </p>
+    </div>
+</div>

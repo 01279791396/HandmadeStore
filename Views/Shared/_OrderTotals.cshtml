@@ -1,0 +1,21 @@
+@model Order
+@* عناصر الطلب + إجمالي المنتجات + التوصيل + الإجمالي النهائي *@
+@foreach (var item in Model.Items)
+{
+    <div class="d-flex justify-content-between py-2 border-bottom">
+        <span>@item.ProductName × @item.Quantity</span>
+        <span>@Fmt.Price(item.LineTotal)</span>
+    </div>
+}
+<div class="d-flex justify-content-between pt-3">
+    <span class="text-muted">إجمالي المنتجات</span><span>@Fmt.Price(Model.Subtotal)</span>
+</div>
+<div class="d-flex justify-content-between pt-1">
+    <span class="text-muted">
+        @if (Model.DeliveryMethod == DeliveryMethod.Pickup) { <text>استلام من المتجر</text> } else { <text>مصاريف التوصيل</text> }
+    </span>
+    <span>@(Model.DeliveryMethod == DeliveryMethod.Pickup ? "—" : (Model.DeliveryFee == 0 ? "مجاني" : Fmt.Price(Model.DeliveryFee)))</span>
+</div>
+<div class="d-flex justify-content-between fw-bold fs-5 mt-2 pt-2 border-top">
+    <span>الإجمالي</span><span class="price">@Fmt.Price(Model.Total)</span>
+</div>

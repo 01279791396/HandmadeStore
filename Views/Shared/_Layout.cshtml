@@ -1,0 +1,204 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<StoreSettings> StoreOptions
+@inject CartService Cart
+@{
+    var store = StoreOptions.Value;
+    var title = ViewData["Title"] as string;
+    var controller = ViewContext.RouteData.Values["controller"] as string ?? "";
+    var action = ViewContext.RouteData.Values["action"] as string ?? "";
+    var isAdmin = User.IsInRole("Admin");
+    var isCustomer = User.IsInRole("Customer");
+    var signedIn = isAdmin || isCustomer;
+    var cartCount = signedIn ? Cart.Count() : 0;
+    var onHome = controller == "Home" && action == "Index";
+    var onProducts = controller == "Products";
+    var onTrack = controller == "Track";
+    var onAbout = controller == "Home" && action == "About";
+    var waNumber = new string((store.WhatsApp ?? "").Where(char.IsDigit).ToArray());
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#c0573b" />
+    <title>@(string.IsNullOrEmpty(title) ? store.Name : title + " | " + store.Name)</title>
+    <meta name="description" content="@(ViewData["Description"] as string ?? store.Tagline)" />
+    <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="~/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="@store.Name" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body>
+    <header class="site-header sticky-top">
+        <nav class="navbar navbar-expand-lg">
+            <div class="container">
+                @if (signedIn)
+                {
+                    <a class="navbar-brand brand" asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-flower1"></i> @store.Name
+                    </a>
+
+                    <div class="nav-actions order-2 order-lg-3 ms-auto ms-lg-0">
+                        <a class="btn btn-brand position-relative cart-btn" asp-controller="Cart" asp-action="Index" aria-label="السلة">
+                            <i class="bi bi-bag"></i> <span class="d-none d-sm-inline">السلة</span>
+                            @if (cartCount > 0)
+                            {
+                                <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-dark">@cartCount</span>
+                            }
+                        </a>
+                    </div>
+
+                    <button class="navbar-toggler order-3" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                            aria-controls="mainNav" aria-expanded="false" aria-label="القائمة">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse order-4 order-lg-2" id="mainNav">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item"><a class="nav-link @(onHome ? "active" : "")" asp-controller="Home" asp-action="Index">الرئيسية</a></li>
+                            <li class="nav-item"><a class="nav-link @(onProducts ? "active" : "")" asp-controller="Products" asp-action="Index">المنتجات</a></li>
+                            @if (!isAdmin)
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Account" asp-action="Orders">طلباتي</a></li>
+                            }
+                            <li class="nav-item"><a class="nav-link @(onTrack ? "active" : "")" asp-controller="Track" asp-action="Index">تتبع طلبي</a></li>
+                            <li class="nav-item"><a class="nav-link @(onAbout ? "active" : "")" asp-controller="Home" asp-action="About">عن المتجر</a></li>
+                        </ul>
+
+                        <div class="d-flex align-items-center flex-wrap gap-2 pb-2 pb-lg-0">
+                            @if (isAdmin)
+                            {
+                                <a class="btn btn-sm btn-soft" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                                    <i class="bi bi-speedometer2"></i> لوحة التحكم
+                                </a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-sm btn-soft" asp-area="" asp-controller="Account" asp-action="Index">
+                                    <i class="bi bi-person-circle"></i> @(User.FindFirst("FullName")?.Value ?? User.Identity?.Name)
+                                </a>
+                            }
+
+                            <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-link text-muted text-decoration-none">
+                                    <i class="bi bi-box-arrow-right"></i> خروج
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @* الزائر: الهيدر بيعرض الاسم وزراري الدخول والتسجيل بس *@
+                    <a class="navbar-brand brand" asp-controller="Account" asp-action="Login">
+                        <i class="bi bi-flower1"></i> @store.Name
+                    </a>
+                    <div class="d-flex align-items-center gap-2 ms-auto">
+                        <a class="btn btn-sm btn-outline-brand" asp-area="" asp-controller="Account" asp-action="Login">
+                            <i class="bi bi-box-arrow-in-left"></i> دخول
+                        </a>
+                        <a class="btn btn-sm btn-soft" asp-area="" asp-controller="Account" asp-action="Register">
+                            <i class="bi bi-person-plus"></i> حساب جديد
+                        </a>
+                    </div>
+                }
+            </div>
+        </nav>
+    </header>
+
+    <main class="py-4">
+        <div class="container">
+            <partial name="_Alerts" />
+        </div>
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer mt-5 pt-5 pb-4">
+        <div class="container">
+            <div class="row gy-4">
+                <div class="col-md-5">
+                    <h5 class="brand-footer"><i class="bi bi-flower1"></i> @store.Name</h5>
+                    <p class="mb-0 footer-muted">@store.Tagline</p>
+                </div>
+                @if (signedIn)
+                {
+                    <div class="col-6 col-md-3">
+                        <h6>روابط سريعة</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li><a asp-controller="Products" asp-action="Index">المنتجات</a></li>
+                            <li><a asp-controller="Track" asp-action="Index">تتبع طلبي</a></li>
+                            <li><a asp-controller="Home" asp-action="About">عن المتجر</a></li>
+                        </ul>
+                    </div>
+                }
+                <div class="col-6 col-md-@(signedIn ? "4" : "7")">
+                    <h6>تواصل معانا</h6>
+                    <ul class="list-unstyled mb-0">
+                        @if (!string.IsNullOrWhiteSpace(store.Phone))
+                        {
+                            <li><i class="bi bi-telephone"></i> <a href="tel:@store.Phone" dir="ltr">@store.Phone</a></li>
+                        }
+                        @if (waNumber.Length > 0)
+                        {
+                            <li><i class="bi bi-whatsapp"></i> <a href="https://wa.me/@waNumber" target="_blank" rel="noopener">واتساب</a></li>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(store.Instagram))
+                        {
+                            <li><i class="bi bi-instagram"></i> <a href="@store.Instagram" target="_blank" rel="noopener">انستجرام</a></li>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(store.Facebook))
+                        {
+                            <li><i class="bi bi-facebook"></i> <a href="@store.Facebook" target="_blank" rel="noopener">فيسبوك</a></li>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(store.Address))
+                        {
+                            <li><i class="bi bi-geo-alt"></i> @store.Address</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <button type="button" class="btn btn-sm btn-outline-light" data-install hidden>
+                    <i class="bi bi-download"></i> ثبّت التطبيق على موبايلك
+                </button>
+            </div>
+            <hr class="footer-hr" />
+            <div class="small footer-muted text-center">© @DateTime.Now.Year @store.Name. جميع الحقوق محفوظة.</div>
+        </div>
+    </footer>
+
+    <div id="installBanner" class="install-banner" hidden role="dialog" aria-label="تثبيت التطبيق">
+        <img src="~/icons/icon-192.png" alt="" width="44" height="44" class="install-icon" />
+        <div class="install-body">
+            <div class="fw-bold" id="installText">ثبّت تطبيق @store.Name على موبايلك</div>
+            <div class="small text-muted" id="installIosHint" hidden>
+                من Safari اضغط زرار المشاركة <i class="bi bi-box-arrow-up"></i> ثم "إضافة إلى الشاشة الرئيسية".
+            </div>
+        </div>
+        <button type="button" class="btn btn-brand btn-sm" data-install>تثبيت</button>
+        <button type="button" class="btn-close" id="installClose" aria-label="إغلاق"></button>
+    </div>
+
+    @if (waNumber.Length > 0)
+    {
+        <a class="wa-float" href="https://wa.me/@waNumber" target="_blank" rel="noopener" aria-label="كلمنا على واتساب">
+            <i class="bi bi-whatsapp"></i>
+        </a>
+    }
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/pwa.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

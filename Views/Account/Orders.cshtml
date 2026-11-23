@@ -1,0 +1,84 @@
+@model CustomerOrdersViewModel
+@{
+    ViewData["Title"] = "طلباتي";
+    var c = Model.Customer;
+    var statuses = new[] { OrderStatus.New, OrderStatus.Confirmed, OrderStatus.InProgress, OrderStatus.Shipped, OrderStatus.Delivered, OrderStatus.Cancelled };
+}
+
+<div class="container">
+    <h1 class="section-title">طلباتي</h1>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-box"><div class="stat-num">@Model.OrdersCount</div><div class="text-muted small">إجمالي الطلبات</div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-box"><div class="stat-num">@Model.ActiveCount</div><div class="text-muted small">طلبات جارية</div></div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="stat-box"><div class="stat-num">@Fmt.Price(Model.TotalSpent)</div><div class="text-muted small">إجمالي مشترياتك (من غير الملغي)</div></div>
+        </div>
+    </div>
+
+    <div class="summary-card mb-4">
+        <h2 class="h6 fw-bold mb-2">بياناتي</h2>
+        <div class="row small g-2">
+            <div class="col-md-4"><i class="bi bi-person"></i> @c.Name</div>
+            <div class="col-md-4"><i class="bi bi-telephone"></i> <span dir="ltr">@c.Phone</span></div>
+            <div class="col-md-4"><i class="bi bi-envelope"></i> <span dir="ltr">@(string.IsNullOrWhiteSpace(c.Email) ? "—" : c.Email)</span></div>
+            <div class="col-12"><i class="bi bi-geo-alt"></i> @(string.IsNullOrWhiteSpace(c.Address) ? "لسه مضفتش عنوان" : c.Address)</div>
+        </div>
+        <a asp-action="Profile" class="btn btn-sm btn-outline-brand mt-3"><i class="bi bi-pencil"></i> تعديل بياناتي</a>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a asp-action="Orders" class="btn btn-sm @(Model.Filter == null ? "btn-brand" : "btn-outline-brand")">الكل</a>
+        @foreach (var s in statuses)
+        {
+            <a asp-action="Orders" asp-route-status="@((int)s)" class="btn btn-sm @(Model.Filter == s ? "btn-brand" : "btn-outline-brand")">@Fmt.StatusText(s)</a>
+        }
+    </div>
+
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="empty-state text-center py-5">
+            <i class="bi bi-bag-heart display-3 text-muted"></i>
+            <p class="mt-3 lead">@(Model.Filter == null ? "لسه معملتش أي طلب" : "مفيش طلبات بالحالة دي")</p>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-brand">ابدأ التسوق</a>
+        </div>
+    }
+    else
+    {
+        foreach (var o in Model.Orders)
+        {
+            <div class="summary-card mb-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                    <div>
+                        <div class="order-row-code fs-5" dir="ltr">@o.Code</div>
+                        <div class="text-muted small">@Fmt.Date(o.CreatedAt) · @o.Items.Sum(i => i.Quantity) قطعة</div>
+                    </div>
+                    <span class="badge fs-6 @Fmt.StatusBadge(o.Status)">@Fmt.StatusText(o.Status)</span>
+                </div>
+
+                <div class="small mt-2">
+                    @string.Join("، ", o.Items.Select(i => i.ProductName + " × " + i.Quantity))
+                </div>
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 pt-2 border-top">
+                    <div class="small text-muted">
+                        <i class="bi @(o.DeliveryMethod == DeliveryMethod.Pickup ? "bi-shop" : "bi-truck")"></i>
+                        @(o.DeliveryMethod == DeliveryMethod.Pickup ? "استلام من المتجر" : "توصيل · " + (o.DeliveryFee == 0 ? "مجاني" : Fmt.Price(o.DeliveryFee)))
+                        <span class="mx-1">·</span> الإجمالي <strong class="price">@Fmt.Price(o.Total)</strong>
+                    </div>
+                    <div class="d-flex gap-2">
+                        @if (o.HasInvoice)
+                        {
+                            <a asp-action="Invoice" asp-route-id="@o.Id" target="_blank" class="btn btn-sm btn-soft"><i class="bi bi-receipt"></i> الفاتورة</a>
+                        }
+                        <a asp-action="OrderDetails" asp-route-id="@o.Id" class="btn btn-sm btn-brand">التفاصيل والتتبع</a>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

@@ -1,0 +1,16 @@
+@{
+    var code = ViewData["Code"] is int c ? c : 500;
+    ViewData["Title"] = code == 404 ? "الصفحة غير موجودة" : "حدث خطأ";
+    var message = code switch
+    {
+        404 => "الصفحة اللي بتدور عليها مش موجودة",
+        429 => "محاولات كتير في وقت قصير، استنى دقيقة وجرب تاني",
+        _ => "حصلت مشكلة غير متوقعة"
+    };
+}
+
+<div class="container text-center py-5">
+    <div class="display-1 fw-bold text-brand">@code</div>
+    <h1 class="h3 mb-3">@message</h1>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-brand">الرجوع للرئيسية</a>
+</div>

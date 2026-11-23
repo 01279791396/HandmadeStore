@@ -1,0 +1,100 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<StoreSettings> StoreOptions
+@model HomeViewModel
+@{
+    var store = StoreOptions.Value;
+    ViewData["Title"] = "الرئيسية";
+}
+
+<section class="hero mb-5">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <span class="badge rounded-pill text-bg-light mb-3"><i class="bi bi-heart-fill text-danger"></i> صنع يدوي 100%</span>
+                <h1 class="display-5 fw-bold mb-3">@store.Name</h1>
+                <p class="lead mb-4">@store.Tagline</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-brand btn-lg">تصفح المنتجات</a>
+                    <a asp-controller="Home" asp-action="About" class="btn btn-outline-brand btn-lg">احنا مين؟</a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block text-center hero-art">
+                <i class="bi bi-flower1"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <section class="features mb-5">
+        <div class="row g-3">
+            <div class="col-6 col-md-3"><div class="feature"><i class="bi bi-hand-index-thumb"></i><span>صنع يدوي 100%</span></div></div>
+            <div class="col-6 col-md-3"><div class="feature"><i class="bi bi-cash-coin"></i><span>الدفع عند الاستلام</span></div></div>
+            <div class="col-6 col-md-3"><div class="feature"><i class="bi bi-gift"></i><span>تغليف هدايا</span></div></div>
+            <div class="col-6 col-md-3"><div class="feature"><i class="bi bi-chat-heart"></i><span>تصميم خاص بطلبك</span></div></div>
+        </div>
+    </section>
+
+    @if (Model.Categories.Count > 0)
+    {
+        <section class="mb-5">
+            <h2 class="section-title">التصنيفات</h2>
+            <div class="row g-3">
+                @foreach (var c in Model.Categories)
+                {
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="Products" asp-action="Index" asp-route-categoryId="@c.Id" class="category-tile">
+                            <i class="bi bi-stars"></i>
+                            <span class="fw-bold">@c.Name</span>
+                            <small class="text-muted">@c.Count منتج</small>
+                        </a>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    @if (Model.Featured.Count > 0)
+    {
+        <section class="mb-5">
+            <h2 class="section-title">منتجات مميزة</h2>
+            <div class="row g-3">
+                @foreach (var p in Model.Featured)
+                {
+                    <div class="col-6 col-md-4 col-lg-3"><partial name="_ProductCard" model="p" /></div>
+                }
+            </div>
+        </section>
+    }
+
+    <section class="mb-5 how-it-works">
+        <h2 class="section-title">إزاي تطلب؟</h2>
+        <div class="row g-3 text-center">
+            <div class="col-md-4">
+                <div class="step"><i class="bi bi-search"></i><h3 class="h6 fw-bold mt-2">1. اختار اللي عجبك</h3><p class="mb-0 text-muted">تصفح المنتجات وشوف الصور والتفاصيل.</p></div>
+            </div>
+            <div class="col-md-4">
+                <div class="step"><i class="bi bi-bag-check"></i><h3 class="h6 fw-bold mt-2">2. اطلب بسهولة</h3><p class="mb-0 text-muted">ضيف للسلة واكتب بياناتك وبعت الطلب.</p></div>
+            </div>
+            <div class="col-md-4">
+                <div class="step"><i class="bi bi-truck"></i><h3 class="h6 fw-bold mt-2">3. استلم وادفع</h3><p class="mb-0 text-muted">هنكلمك لتأكيد الطلب، والدفع عند الاستلام.</p></div>
+            </div>
+        </div>
+    </section>
+
+    @if (Model.Latest.Count > 0)
+    {
+        <section class="mb-5">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="section-title mb-0">وصل حديثًا</h2>
+                <a asp-controller="Products" asp-action="Index">شوف الكل <i class="bi bi-arrow-left"></i></a>
+            </div>
+            <div class="row g-3 mt-1">
+                @foreach (var p in Model.Latest)
+                {
+                    <div class="col-6 col-md-4 col-lg-3"><partial name="_ProductCard" model="p" /></div>
+                }
+            </div>
+        </section>
+    }
+</div>

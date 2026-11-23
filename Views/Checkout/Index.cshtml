@@ -1,0 +1,124 @@
+@model CheckoutViewModel
+@{
+    ViewData["Title"] = "إتمام الطلب";
+    var cart = Model.Cart ?? new CartViewModel();
+    var freeFee = Model.FreeDeliveryOver > 0 && cart.Total >= Model.FreeDeliveryOver;
+    var fee = freeFee ? 0m : Model.DeliveryFee;
+    var isPickup = Model.DeliveryMethod == DeliveryMethod.Pickup;
+}
+
+<div class="container">
+    <h1 class="section-title">إتمام الطلب</h1>
+
+    <div class="row g-4">
+        <div class="col-lg-7 order-2 order-lg-1">
+            <form asp-action="Index" method="post" class="summary-card">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <label asp-for="CustomerName" class="form-label"></label>
+                    <input asp-for="CustomerName" class="form-control" autocomplete="name" />
+                    <span asp-validation-for="CustomerName" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Phone" class="form-label"></label>
+                    <input asp-for="Phone" class="form-control" dir="ltr" inputmode="tel" autocomplete="tel" placeholder="01xxxxxxxxx" />
+                    <span asp-validation-for="Phone" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">طريقة الاستلام</label>
+                    <div class="delivery-options">
+                        <label class="delivery-option">
+                            <input type="radio" asp-for="DeliveryMethod" value="@DeliveryMethod.Delivery" />
+                            <span class="delivery-box">
+                                <i class="bi bi-truck"></i>
+                                <strong>توصيل لحد البيت</strong>
+                                <small class="text-muted">
+                                    @if (freeFee) { <text>توصيل مجاني 🎉</text> }
+                                    else { <text>مصاريف التوصيل @Fmt.Price(Model.DeliveryFee)</text> }
+                                    @if (Model.FreeDeliveryOver > 0 && !freeFee)
+                                    {
+                                        <br /><text>مجاني فوق @Fmt.Price(Model.FreeDeliveryOver)</text>
+                                    }
+                                </small>
+                            </span>
+                        </label>
+                        @if (Model.PickupEnabled)
+                        {
+                            <label class="delivery-option">
+                                <input type="radio" asp-for="DeliveryMethod" value="@DeliveryMethod.Pickup" />
+                                <span class="delivery-box">
+                                    <i class="bi bi-shop"></i>
+                                    <strong>استلام من المتجر</strong>
+                                    <small class="text-muted">من غير مصاريف · @Model.StoreAddress</small>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                </div>
+                <div class="mb-3" id="addressGroup">
+                    <label asp-for="Address" class="form-label"></label>
+                    <textarea asp-for="Address" class="form-control" rows="3" autocomplete="street-address"></textarea>
+                    <span asp-validation-for="Address" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                    <span asp-validation-for="Notes" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-brand btn-lg w-100">تأكيد الطلب</button>
+                <p class="small text-muted mt-2 mb-0">بالضغط على تأكيد الطلب هنتواصل معاك على الرقم ده لتأكيده. الدفع عند الاستلام.</p>
+            </form>
+        </div>
+
+        <div class="col-lg-5 order-1 order-lg-2">
+            <div class="summary-card">
+                <h2 class="h5 fw-bold">طلبك</h2>
+                @foreach (var item in cart.Items)
+                {
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span>@item.Product.Name × @item.Quantity</span>
+                        <span>@Fmt.Price(item.LineTotal)</span>
+                    </div>
+                }
+                <div class="d-flex justify-content-between pt-3">
+                    <span>إجمالي المنتجات</span><span>@Fmt.Price(cart.Total)</span>
+                </div>
+                <div class="d-flex justify-content-between pt-1">
+                    <span>مصاريف التوصيل</span>
+                    <span id="feeText" data-fee="@fee.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" data-subtotal="@cart.Total.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)">
+                        @(isPickup ? "—" : (fee == 0 ? "مجاني" : Fmt.Price(fee)))
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between fw-bold fs-5 mt-2 pt-2 border-top">
+                    <span>الإجمالي</span><span class="price" id="grandTotal">@Fmt.Price(cart.Total + (isPickup ? 0m : fee))</span>
+                </div>
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-link px-0 mt-2">تعديل السلة</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var feeEl = document.getElementById('feeText');
+            var totalEl = document.getElementById('grandTotal');
+            var addr = document.getElementById('addressGroup');
+            if (!feeEl || !totalEl) return;
+            var fee = parseFloat(feeEl.dataset.fee) || 0;
+            var subtotal = parseFloat(feeEl.dataset.subtotal) || 0;
+            function money(n) { return n.toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' ج.م'; }
+            function update() {
+                var picked = document.querySelector('input[name="DeliveryMethod"]:checked');
+                var pickup = picked && picked.value === 'Pickup';
+                feeEl.textContent = pickup ? '—' : (fee === 0 ? 'مجاني' : money(fee));
+                totalEl.textContent = money(subtotal + (pickup ? 0 : fee));
+                if (addr) addr.style.display = pickup ? 'none' : '';
+            }
+            document.querySelectorAll('input[name="DeliveryMethod"]').forEach(function (r) { r.addEventListener('change', update); });
+            update();
+        })();
+    </script>
+}

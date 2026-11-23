@@ -1,0 +1,32 @@
+@model OrderStatus
+@{
+    var steps = new[]
+    {
+        (Status: OrderStatus.New, Text: "تم الاستلام", Icon: "bi-inbox"),
+        (Status: OrderStatus.Confirmed, Text: "تم التأكيد", Icon: "bi-check2-circle"),
+        (Status: OrderStatus.InProgress, Text: "جاري التجهيز", Icon: "bi-hammer"),
+        (Status: OrderStatus.Shipped, Text: "تم الشحن", Icon: "bi-truck"),
+        (Status: OrderStatus.Delivered, Text: "تم التسليم", Icon: "bi-house-heart")
+    };
+    var current = (int)Model;
+    var finished = Model == OrderStatus.Delivered;
+}
+
+@if (Model == OrderStatus.Cancelled)
+{
+    <div class="alert alert-danger mb-0"><i class="bi bi-x-circle"></i> تم إلغاء هذا الطلب</div>
+}
+else
+{
+    <ol class="timeline">
+        @foreach (var step in steps)
+        {
+            var stepIndex = (int)step.Status;
+            var state = (stepIndex < current || finished) ? "done" : (stepIndex == current ? "current" : "");
+            <li class="@state">
+                <span class="dot"><i class="bi @step.Icon"></i></span>
+                <span class="label">@step.Text</span>
+            </li>
+        }
+    </ol>
+}

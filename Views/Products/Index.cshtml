@@ -1,0 +1,67 @@
+@model ProductListViewModel
+@{
+    ViewData["Title"] = "المنتجات";
+
+    var route = new Dictionary<string, string>();
+    if (Model.CategoryId.HasValue) { route["categoryId"] = Model.CategoryId.Value.ToString(); }
+    if (!string.IsNullOrWhiteSpace(Model.Q)) { route["q"] = Model.Q!; }
+    if (Model.Sort != "new") { route["sort"] = Model.Sort; }
+
+    var pager = new PagerViewModel
+    {
+        Page = Model.Page,
+        TotalPages = Model.TotalPages,
+        Action = "Index",
+        Route = route
+    };
+}
+
+<div class="container">
+    <h1 class="section-title">المنتجات</h1>
+
+    <form method="get" asp-action="Index" class="row g-2 mb-3 filter-bar">
+        <div class="col-12 col-md-5">
+            <input type="search" name="q" value="@Model.Q" class="form-control" placeholder="ابحث عن منتج..." />
+        </div>
+        <div class="col-6 col-md-3">
+            <select name="categoryId" class="form-select">
+                <option value="">كل التصنيفات</option>
+                @foreach (var c in Model.Categories)
+                {
+                    <option value="@c.Id" selected="@(Model.CategoryId == c.Id)">@c.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <select name="sort" class="form-select">
+                <option value="new" selected="@(Model.Sort == "new")">الأحدث</option>
+                <option value="price_asc" selected="@(Model.Sort == "price_asc")">الأرخص</option>
+                <option value="price_desc" selected="@(Model.Sort == "price_desc")">الأغلى</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2">
+            <button type="submit" class="btn btn-brand w-100"><i class="bi bi-funnel"></i> تطبيق</button>
+        </div>
+    </form>
+
+    <p class="text-muted">@Model.TotalCount منتج</p>
+
+    @if (Model.Products.Count == 0)
+    {
+        <div class="empty-state text-center py-5">
+            <i class="bi bi-emoji-frown display-4 text-muted"></i>
+            <p class="mt-3">مفيش منتجات مطابقة للبحث.</p>
+            <a asp-action="Index" class="btn btn-outline-brand">عرض كل المنتجات</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var p in Model.Products)
+            {
+                <div class="col-6 col-md-4"><partial name="_ProductCard" model="p" /></div>
+            }
+        </div>
+        <partial name="_Pager" model="pager" />
+    }
+</div>
