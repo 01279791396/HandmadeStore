@@ -179,7 +179,7 @@ if (startupError != null)
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+   // app.UseHsts();
 }
 
 app.UseStatusCodePagesWithReExecute("/Home/Status", "?code={0}");
