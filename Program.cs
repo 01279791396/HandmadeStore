@@ -81,6 +81,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromDays(14);
     options.SlidingExpiration = true;
 });
+
 builder.Services.AddAuthorization(options =>
 {
     // أي صفحة لازم يكون المستخدم مسجّل دخول، إلا اللي عليها [AllowAnonymous]
@@ -112,22 +113,6 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var dbContext = services.GetRequiredService<AppDbContext>(); // غيّر الاسم لاسم الـ DbContext بتاعك
-        dbContext.Database.Migrate();
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "حدث خطأ أثناء تطبيق الـ Migrations على قاعدة البيانات.");
-        throw; // اتركه يرمي الخطأ أثناء الاختبار الأولي لتعرف لو فيه مشكلة في الـ Connection String
-    }
-}
-
 // لو تهيئة الداتابيز فشلت، نكتب الخطأ في ملف ونعرضه في الصفحة (مؤقتًا للتشخيص)
 // بدل ما التطبيق يقع بـ 500.30 من غير أي تفاصيل.
 string? startupError = null;
@@ -139,6 +124,13 @@ try
 {
     if (!isEfTool)
     {
+        var connectionString = builder.Configuration.GetConnectionString("Default");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "Connection string 'Default' غير موجود أو فارغ في appsettings.json.");
+        }
+
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -149,8 +141,8 @@ try
                 "وارفع مجلد Migrations مع الكود.");
         }
 
-        // بنطبّق الـ Migrations (الجداول بتتعمل من Add-Migration + Migrate)
-        db.Database.Migrate();
+        // بنطبّق الـ Migrations مرة واحدة فقط (الجداول بتتعمل من Add-Migration + Migrate)
+        await db.Database.MigrateAsync();
         await DbSeeder.SeedAsync(scope.ServiceProvider, app.Configuration, app.Logger);
     }
 }
@@ -174,7 +166,7 @@ if (startupError != null)
     var show = app.Configuration.GetValue<bool>("Diagnostics:ShowStartupError");
     app.Run(async context =>
     {
-        context.Response.StatusCode = 503;
+        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
         context.Response.ContentType = "text/plain; charset=utf-8";
         await context.Response.WriteAsync(show
             ? "Startup error:\n\n" + startupError
